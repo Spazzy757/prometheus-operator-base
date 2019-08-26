@@ -1,0 +1,362 @@
+---
+# Source: prometheus-operator/charts/kube-state-metrics/templates/podsecuritypolicy.yaml
+
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: promethues-operator-kube-state-metrics
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-2.0.0
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: promethues-operator
+spec:
+  privileged: false
+  volumes:
+    - 'secret'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+
+---
+# Source: prometheus-operator/charts/kube-state-metrics/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-2.0.0
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: promethues-operator
+  name: promethues-operator-kube-state-metrics
+imagePullSecrets: []
+---
+# Source: prometheus-operator/charts/kube-state-metrics/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-2.0.0
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: promethues-operator
+  name: promethues-operator-kube-state-metrics
+rules:
+
+- apiGroups: ["certificates.k8s.io"]
+  resources:
+  - certificatesigningrequests
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - configmaps
+  verbs: ["list", "watch"]
+
+- apiGroups: ["batch"]
+  resources:
+  - cronjobs
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - daemonsets
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - deployments
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - endpoints
+  verbs: ["list", "watch"]
+
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions"]
+  resources:
+  - ingresses
+  verbs: ["list", "watch"]
+
+- apiGroups: ["batch"]
+  resources:
+  - jobs
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - limitranges
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - namespaces
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - nodes
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - persistentvolumeclaims
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - persistentvolumes
+  verbs: ["list", "watch"]
+
+- apiGroups: ["policy"]
+  resources:
+    - poddisruptionbudgets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - pods
+  verbs: ["list", "watch"]
+
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - replicasets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - replicationcontrollers
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - resourcequotas
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - secrets
+  verbs: ["list", "watch"]
+
+- apiGroups: [""]
+  resources:
+  - services
+  verbs: ["list", "watch"]
+
+- apiGroups: ["apps"]
+  resources:
+  - statefulsets
+  verbs: ["list", "watch"]
+---
+# Source: prometheus-operator/charts/kube-state-metrics/templates/psp-clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-2.0.0
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: promethues-operator
+  name: psp-promethues-operator-kube-state-metrics
+rules:
+- apiGroups: ['extensions']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - promethues-operator-kube-state-metrics
+
+---
+# Source: prometheus-operator/charts/kube-state-metrics/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-2.0.0
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: promethues-operator
+  name: promethues-operator-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promethues-operator-kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: promethues-operator-kube-state-metrics
+  namespace: monitoring
+
+---
+# Source: prometheus-operator/charts/kube-state-metrics/templates/psp-clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: kube-state-metrics-2.0.0
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/instance: promethues-operator
+  name: psp-promethues-operator-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: psp-promethues-operator-kube-state-metrics
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-kube-state-metrics
+    namespace: monitoring
+
+---
+# Source: prometheus-operator/charts/kube-state-metrics/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promethues-operator-kube-state-metrics
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: "kube-state-metrics-2.0.0"
+    app.kubernetes.io/instance: "promethues-operator"
+    app.kubernetes.io/managed-by: "Tiller"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-state-metrics
+        app.kubernetes.io/instance: "promethues-operator"
+    spec:
+      hostNetwork: false
+      serviceAccountName: promethues-operator-kube-state-metrics
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
+      containers:
+      - name: kube-state-metrics
+        args:
+
+        - --collectors=certificatesigningrequests
+
+
+        - --collectors=configmaps
+
+
+        - --collectors=cronjobs
+
+
+        - --collectors=daemonsets
+
+
+        - --collectors=deployments
+
+
+        - --collectors=endpoints
+
+
+        - --collectors=horizontalpodautoscalers
+
+
+        - --collectors=ingresses
+
+
+        - --collectors=jobs
+
+
+        - --collectors=limitranges
+
+
+        - --collectors=namespaces
+
+
+        - --collectors=nodes
+
+
+        - --collectors=persistentvolumeclaims
+
+
+        - --collectors=persistentvolumes
+
+
+        - --collectors=poddisruptionbudgets
+
+
+        - --collectors=pods
+
+
+        - --collectors=replicasets
+
+
+        - --collectors=replicationcontrollers
+
+
+        - --collectors=resourcequotas
+
+
+        - --collectors=secrets
+
+
+        - --collectors=services
+
+
+        - --collectors=statefulsets
+
+
+        imagePullPolicy: IfNotPresent
+        image: "quay.io/coreos/kube-state-metrics:v1.6.0"
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        resources:
+            null
+            
+
+---
+# Source: prometheus-operator/templates/exporters/kube-state-metrics/serviceMonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-kube-state-metrics
+  labels:
+    app: prometheus-operator-kube-state-metrics
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  jobLabel: app.kubernetes.io/name
+  endpoints:
+  - port: http
+    honorLabels: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+      app.kubernetes.io/instance: "promethues-operator"

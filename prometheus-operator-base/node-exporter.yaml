@@ -1,0 +1,510 @@
+---
+# Source: prometheus-operator/charts/prometheus-node-exporter/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promethues-operator-prometheus-node-exporter
+  labels:
+    app: prometheus-node-exporter
+    chart: prometheus-node-exporter-1.5.1    
+    release: "promethues-operator"
+    heritage: "Tiller"
+imagePullSecrets: 
+  []
+
+---
+# Source: prometheus-operator/charts/prometheus-node-exporter/templates/psp-clusterrole.yaml
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Tiller
+    release: promethues-operator
+    chart: prometheus-node-exporter-1.5.1
+    jobLabel: node-exporter
+    
+  name: psp-promethues-operator-prometheus-node-exporter
+rules:
+- apiGroups: ['extensions']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - promethues-operator-prometheus-node-exporter
+
+---
+# Source: prometheus-operator/charts/prometheus-node-exporter/templates/psp-clusterrolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Tiller
+    release: promethues-operator
+    chart: prometheus-node-exporter-1.5.1
+    jobLabel: node-exporter
+    
+  name: psp-promethues-operator-prometheus-node-exporter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: psp-promethues-operator-prometheus-node-exporter
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-prometheus-node-exporter
+    namespace: monitoring
+
+---
+# Source: prometheus-operator/charts/prometheus-node-exporter/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-prometheus-node-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Tiller
+    release: promethues-operator
+    chart: prometheus-node-exporter-1.5.1
+    jobLabel: node-exporter
+    
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9100
+      targetPort: 9100
+      protocol: TCP
+      name: metrics
+  selector:
+    app: prometheus-node-exporter
+    release: promethues-operator
+---
+# Source: prometheus-operator/templates/exporters/core-dns/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-promet-coredns
+  labels:
+    app: prometheus-operator-coredns
+    jobLabel: coredns
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+  namespace: kube-system
+spec:
+  clusterIP: None
+  ports:
+    - name: http-metrics
+      port: 9153
+      protocol: TCP
+      targetPort: 9153
+  selector:
+    
+    k8s-app: kube-dns
+---
+# Source: prometheus-operator/templates/exporters/kube-controller-manager/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-promet-kube-controller-manager
+  labels:
+    app: prometheus-operator-kube-controller-manager
+    jobLabel: kube-controller-manager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+  namespace: kube-system
+spec:
+  clusterIP: None
+  ports:
+    - name: http-metrics
+      port: 10252
+      protocol: TCP
+      targetPort: 10252
+  selector:
+    
+    component: kube-controller-manager
+  type: ClusterIP
+
+---
+# Source: prometheus-operator/templates/exporters/kube-etcd/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-promet-kube-etcd
+  labels:
+    app: prometheus-operator-kube-etcd
+    jobLabel: kube-etcd
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+  namespace: kube-system
+spec:
+  clusterIP: None
+  ports:
+    - name: http-metrics
+      port: 2379
+      protocol: TCP
+      targetPort: 2379
+  selector:
+      
+    component: etcd
+  type: ClusterIP
+---
+# Source: prometheus-operator/templates/exporters/kube-proxy/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-promet-kube-proxy
+  labels:
+    app: prometheus-operator-kube-proxy
+    jobLabel: kube-proxy
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+  namespace: kube-system
+spec:
+  clusterIP: None
+  ports:
+    - name: http-metrics
+      port: 10249
+      protocol: TCP
+      targetPort: 10249
+  selector:
+      
+    k8s-app: kube-proxy
+  type: ClusterIP
+---
+# Source: prometheus-operator/templates/exporters/kube-scheduler/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-promet-kube-scheduler
+  labels:
+    app: prometheus-operator-kube-scheduler
+    jobLabel: kube-scheduler
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+  namespace: kube-system
+spec:
+  clusterIP: None
+  ports:
+    - name: http-metrics
+      port: 10251
+      protocol: TCP
+      targetPort: 10251
+  selector:
+      
+    component: kube-scheduler
+  type: ClusterIP
+
+---
+# Source: prometheus-operator/charts/prometheus-node-exporter/templates/daemonset.yaml
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: promethues-operator-prometheus-node-exporter
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Tiller
+    release: promethues-operator
+    chart: prometheus-node-exporter-1.5.1
+    jobLabel: node-exporter
+    
+spec:
+  selector:
+    matchLabels:
+      app: prometheus-node-exporter
+      release: promethues-operator
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:         
+        app: prometheus-node-exporter
+        heritage: Tiller
+        release: promethues-operator
+        chart: prometheus-node-exporter-1.5.1
+        jobLabel: node-exporter
+        
+    spec:
+      serviceAccountName: promethues-operator-prometheus-node-exporter
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        
+      containers:
+        - name: node-exporter
+          image: "quay.io/prometheus/node-exporter:v0.18.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --web.listen-address=0.0.0.0:9100
+            - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($|/)
+            - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$
+            
+          ports:
+            - name: metrics
+              containerPort: 9100
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9100
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9100
+          resources:
+            {}
+            
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly:  true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+      hostNetwork: true
+      hostPID: true
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+---
+# Source: prometheus-operator/templates/exporters/core-dns/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-coredns
+  labels:
+    app: prometheus-operator-coredns
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: prometheus-operator-coredns
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "kube-system"
+  endpoints:
+  - port: http-metrics
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+---
+# Source: prometheus-operator/templates/exporters/kube-api-server/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-apiserver
+  labels:
+    app: prometheus-operator-apiserver
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  endpoints:
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    port: https
+    scheme: https
+    tlsConfig:
+      caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      serverName: kubernetes
+      insecureSkipVerify: false
+  jobLabel: component
+  namespaceSelector:
+    matchNames:
+    - default
+  selector:
+    matchLabels:
+      component: apiserver
+      provider: kubernetes
+    
+
+---
+# Source: prometheus-operator/templates/exporters/kube-controller-manager/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-kube-controller-manager
+  labels:
+    app: prometheus-operator-kube-controller-manager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: prometheus-operator-kube-controller-manager
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "kube-system"
+  endpoints:
+  - port: http-metrics
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+---
+# Source: prometheus-operator/templates/exporters/kube-etcd/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-kube-etcd
+  labels:
+    app: prometheus-operator-kube-etcd
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: prometheus-operator-kube-etcd
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "kube-system"
+  endpoints:
+  - port: http-metrics
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+---
+# Source: prometheus-operator/templates/exporters/kube-proxy/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-kube-proxy
+  labels:
+    app: prometheus-operator-kube-proxy
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: prometheus-operator-kube-proxy
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "kube-system"
+  endpoints:
+  - port: http-metrics
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+---
+# Source: prometheus-operator/templates/exporters/kube-scheduler/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-kube-scheduler
+  labels:
+    app: prometheus-operator-kube-scheduler
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: prometheus-operator-kube-scheduler
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "kube-system"
+  endpoints:
+  - port: http-metrics
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+---
+# Source: prometheus-operator/templates/exporters/kubelet/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-kubelet
+  labels:
+    app: prometheus-operator-kubelet
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  endpoints:
+  - port: http-metrics
+    honorLabels: true
+  - port: http-metrics
+    path: /metrics/cadvisor
+    honorLabels: true
+  jobLabel: k8s-app
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      k8s-app: kubelet
+
+---
+# Source: prometheus-operator/templates/exporters/node-exporter/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-node-exporter
+  labels:
+    app: prometheus-operator-node-exporter
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: prometheus-node-exporter
+      release: promethues-operator
+  endpoints:
+  - port: metrics
+

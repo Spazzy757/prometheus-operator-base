@@ -1,0 +1,110 @@
+---
+# Source: prometheus-operator/templates/prometheus/serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promethues-operator-promet-prometheus
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+imagePullSecrets:
+  []
+
+---
+# Source: prometheus-operator/templates/prometheus/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-promet-prometheus
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  ports:
+  - name: web
+    port: 9090
+    targetPort: 9090
+  selector:
+    app: prometheus
+    prometheus: promethues-operator-promet-prometheus
+  type: "ClusterIP"
+---
+# Source: prometheus-operator/templates/prometheus/prometheus.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: promethues-operator-promet-prometheus
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  alerting:
+    alertmanagers:
+      - namespace: monitoring
+        name: promethues-operator-promet-alertmanager
+        port: web
+        pathPrefix: "/"
+  baseImage: quay.io/prometheus/prometheus
+  version: v2.10.0
+  externalUrl: http://promethues-operator-promet-prometheus.monitoring:9090
+  paused: false
+  replicas: 1
+  logLevel:  info
+  logFormat:  logfmt
+  listenLocal: false
+  enableAdminAPI: false
+  retention: "10d"
+  routePrefix: "/"
+  serviceAccountName: promethues-operator-promet-prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      release: "promethues-operator"
+
+  serviceMonitorNamespaceSelector: {}
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    
+  ruleNamespaceSelector: {}
+  ruleSelector:
+    matchLabels:
+      app: prometheus-operator
+      release: "promethues-operator"
+
+---
+# Source: prometheus-operator/templates/prometheus/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-prometheus
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  selector:
+    matchLabels:
+      app: prometheus-operator-prometheus
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "monitoring"
+  endpoints:
+  - port: web
+    path: "/metrics"

@@ -1,0 +1,575 @@
+---
+# Source: prometheus-operator/charts/grafana/templates/podsecuritypolicy.yaml
+
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: promethues-operator-grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default'
+    seccomp.security.alpha.kubernetes.io/defaultProfileName:  'docker/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    # Default set from Docker, without DAC_OVERRIDE or CHOWN
+    - FOWNER
+    - FSETID
+    - KILL
+    - SETGID
+    - SETUID
+    - SETPCAP
+    - NET_BIND_SERVICE
+    - NET_RAW
+    - SYS_CHROOT
+    - MKNOD
+    - AUDIT_WRITE
+    - SETFCAP
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: false
+---
+# Source: prometheus-operator/charts/grafana/templates/tests/test-podsecuritypolicy.yaml
+
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: promethues-operator-grafana-test
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    heritage: Tiller
+    release: promethues-operator
+spec:
+  allowPrivilegeEscalation: true
+  privileged: false
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  fsGroup:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  runAsUser:
+    rule: RunAsAny
+  volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - projected
+  - secret
+---
+# Source: prometheus-operator/charts/grafana/templates/configmap-dashboard-provider.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    release: promethues-operator
+    heritage: Tiller
+  name: promethues-operator-grafana-config-dashboards
+  namespace: monitoring
+data:
+  provider.yaml: |-
+    apiVersion: 1
+    providers:
+    - name: 'sidecarProvider'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      options:
+        path: /tmp/dashboards
+---
+# Source: prometheus-operator/charts/grafana/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promethues-operator-grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    release: promethues-operator
+    heritage: Tiller
+data:
+  grafana.ini: |
+    [analytics]
+    check_for_updates = true
+    [grafana_net]
+    url = https://grafana.net
+    [log]
+    mode = console
+    [paths]
+    data = /var/lib/grafana/data
+    logs = /var/log/grafana
+    plugins = /var/lib/grafana/plugins
+    provisioning = /etc/grafana/provisioning
+---
+# Source: prometheus-operator/charts/grafana/templates/tests/test-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promethues-operator-grafana-test
+  labels:
+    app: promethues-operator-grafana
+    chart: "grafana-3.7.3"
+    heritage: "Tiller"
+    release: "promethues-operator"
+data:
+  run.sh: |-
+    @test "Test Health" {
+      url="http://promethues-operator-grafana/api/health"
+
+      code=$(curl -s -o /dev/null -I -w "%{http_code}" $url)
+      [ "$code" == "200" ]
+    }
+---
+# Source: prometheus-operator/templates/grafana/configmaps-datasources.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promethues-operator-promet-grafana-datasource
+  labels:
+    grafana_datasource: "1"
+    app: prometheus-operator-grafana
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+data:
+  datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://promethues-operator-promet-prometheus:9090/
+      access: proxy
+      isDefault: true
+---
+# Source: prometheus-operator/charts/grafana/templates/serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    heritage: Tiller
+    release: promethues-operator
+  name: promethues-operator-grafana
+  namespace: monitoring
+---
+# Source: prometheus-operator/charts/grafana/templates/tests/test-serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    heritage: Tiller
+    release: promethues-operator
+  name: promethues-operator-grafana-test
+
+---
+# Source: prometheus-operator/charts/grafana/templates/clusterrole.yaml
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    release: promethues-operator
+    heritage: Tiller
+  name: promethues-operator-grafana-clusterrole
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "watch", "list"]
+---
+# Source: prometheus-operator/charts/grafana/templates/clusterrolebinding.yaml
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: promethues-operator-grafana-clusterrolebinding
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    release: promethues-operator
+    heritage: Tiller
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-grafana
+    namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: promethues-operator-grafana-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Source: prometheus-operator/charts/grafana/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: promethues-operator-grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    heritage: Tiller
+    release: promethues-operator
+rules:
+- apiGroups:      ['extensions']
+  resources:      ['podsecuritypolicies']
+  verbs:          ['use']
+  resourceNames:  [promethues-operator-grafana]
+
+---
+# Source: prometheus-operator/charts/grafana/templates/tests/test-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: promethues-operator-grafana-test
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    heritage: Tiller
+    release: promethues-operator
+rules:
+- apiGroups:      ['policy']
+  resources:      ['podsecuritypolicies']
+  verbs:          ['use']
+  resourceNames:  [promethues-operator-grafana-test]
+
+---
+# Source: prometheus-operator/charts/grafana/templates/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: promethues-operator-grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    heritage: Tiller
+    release: promethues-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: promethues-operator-grafana
+subjects:
+- kind: ServiceAccount
+  name: promethues-operator-grafana
+  namespace: monitoring
+---
+# Source: prometheus-operator/charts/grafana/templates/tests/test-rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: promethues-operator-grafana-test
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    heritage: Tiller
+    release: promethues-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: promethues-operator-grafana-test
+subjects:
+- kind: ServiceAccount
+  name: promethues-operator-grafana-test
+  namespace: monitoring
+
+---
+# Source: prometheus-operator/charts/grafana/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    release: promethues-operator
+    heritage: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - name: service
+      port: 80
+      protocol: TCP
+      targetPort: 3000
+
+  selector:
+    app: grafana
+    release: promethues-operator
+---
+# Source: prometheus-operator/charts/kube-state-metrics/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-kube-state-metrics
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    helm.sh/chart: "kube-state-metrics-2.0.0"
+    app.kubernetes.io/instance: "promethues-operator"
+    app.kubernetes.io/managed-by: "Tiller"
+  annotations:
+    prometheus.io/scrape: 'true'
+spec:
+  type: "ClusterIP"
+  ports:
+  - name: "http"
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: promethues-operator
+
+
+---
+# Source: prometheus-operator/charts/grafana/templates/tests/test.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: promethues-operator-grafana-test
+  labels:
+    app: promethues-operator-grafana
+    chart: "grafana-3.7.3"
+    heritage: "Tiller"
+    release: "promethues-operator"
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  serviceAccountName: promethues-operator-grafana-test
+  initContainers:
+    - name: test-framework
+      image: "dduportal/bats:0.4.0"
+      command:
+      - "bash"
+      - "-c"
+      - |
+        set -ex
+        # copy bats to tools dir
+        cp -R /usr/local/libexec/ /tools/bats/
+      volumeMounts:
+      - mountPath: /tools
+        name: tools
+  containers:
+    - name: promethues-operator-test
+      image: "dduportal/bats:0.4.0"
+      command: ["/tools/bats/bats", "-t", "/tests/run.sh"]
+      volumeMounts:
+        - mountPath: /tests
+          name: tests
+          readOnly: true
+        - mountPath: /tools
+          name: tools
+  volumes:
+  - name: tests
+    configMap:
+      name: promethues-operator-grafana-test
+  - name: tools
+    emptyDir: {}
+  restartPolicy: Never
+
+---
+# Source: prometheus-operator/charts/grafana/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: promethues-operator-grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    chart: grafana-3.7.3
+    release: promethues-operator
+    heritage: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+      release: promethues-operator
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: grafana
+        release: promethues-operator
+      annotations:
+        checksum/config: fa69dfc1f92b39007ab1f8a7b75d16385dabff1eb6d0a9886a370e9d51a19a0e
+        checksum/dashboards-json-config: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+        checksum/sc-dashboard-provider-config: c109461c301639cd17653649e3d4b5a867609e967a0968b2cbf1adf5ee29f066
+        checksum/secret: 3f089e4ab3feaa391a22feebbcff1e99832cd2610d5027bdbbc6f4c6130f2aee
+    spec:
+      serviceAccountName: promethues-operator-grafana
+      securityContext:
+        fsGroup: 472
+        runAsUser: 472
+        
+      initContainers:
+        - name: grafana-sc-datasources
+          image: "kiwigrid/k8s-sidecar:0.0.18"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: METHOD
+              value: LIST
+            - name: LABEL
+              value: "grafana_datasource"
+            - name: FOLDER
+              value: "/etc/grafana/provisioning/datasources"
+            - name: RESOURCE
+              value: "both"
+          resources:
+            {}
+            
+          volumeMounts:
+            - name: sc-datasources-volume
+              mountPath: "/etc/grafana/provisioning/datasources"
+      containers:
+        - name: grafana-sc-dashboard
+          image: "kiwigrid/k8s-sidecar:0.0.18"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LABEL
+              value: "grafana_dashboard"
+            - name: FOLDER
+              value: "/tmp/dashboards"
+            - name: RESOURCE
+              value: "both"
+          resources:
+            {}
+            
+          volumeMounts:
+            - name: sc-dashboard-volume
+              mountPath: "/tmp/dashboards"
+        - name: grafana
+          image: "grafana/grafana:6.2.5"
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: config
+              mountPath: "/etc/grafana/grafana.ini"
+              subPath: grafana.ini
+            - name: ldap
+              mountPath: "/etc/grafana/ldap.toml"
+              subPath: ldap.toml
+            - name: storage
+              mountPath: "/var/lib/grafana"
+            - name: sc-dashboard-volume
+              mountPath: "/tmp/dashboards"
+            - name: sc-dashboard-provider
+              mountPath: "/etc/grafana/provisioning/dashboards/sc-dashboardproviders.yaml"
+              subPath: provider.yaml
+            - name: sc-datasources-volume
+              mountPath: "/etc/grafana/provisioning/datasources"
+          ports:
+            - name: service
+              containerPort: 80
+              protocol: TCP
+            - name: grafana
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: promethues-operator-grafana
+                  key: admin-user
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: promethues-operator-grafana
+                  key: admin-password
+          livenessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+            
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            
+          resources:
+            {}
+            
+      volumes:
+        - name: config
+          configMap:
+            name: promethues-operator-grafana
+        - name: ldap
+          secret:
+            secretName: promethues-operator-grafana
+            items:
+              - key: ldap-toml
+                path: ldap.toml
+        - name: storage
+          emptyDir: {}
+        - name: sc-dashboard-volume
+          emptyDir: {}
+        - name: sc-dashboard-provider
+          configMap:
+            name: promethues-operator-grafana-config-dashboards
+        - name: sc-datasources-volume
+          emptyDir: {}
+---
+# Source: prometheus-operator/templates/grafana/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-grafana
+  labels:
+    app: prometheus-operator-grafana
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "monitoring"
+  endpoints:
+  - port: service
+    path: "/metrics"
+

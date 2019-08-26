@@ -1,0 +1,871 @@
+---
+# Source: prometheus-operator/charts/prometheus-node-exporter/templates/psp.yaml
+
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  labels:     
+    app: prometheus-node-exporter
+    heritage: Tiller
+    release: promethues-operator
+    chart: prometheus-node-exporter-1.5.1
+    jobLabel: node-exporter
+    
+  name: promethues-operator-prometheus-node-exporter
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  # allowPrivilegeEscalation: false
+  # This is redundant with non-root + disallow privilege escalation,
+  # but we can provide it for defense in depth.
+  #requiredDropCapabilities:
+  #  - ALL
+  # Allow core volume types.
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+    - 'hostPath'
+  hostNetwork: true
+  hostIPC: false
+  hostPID: true
+  hostPorts:
+    - min: 0
+      max: 65535
+  runAsUser:
+    # Permits the container to run with root privileges as well.
+    rule: 'RunAsAny'
+  seLinux:
+    # This policy assumes the nodes are using AppArmor rather than SELinux.
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  readOnlyRootFilesystem: false
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/job-patch/psp.yaml
+
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: promethues-operator-promet-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: prometheus-operator-admission
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  # allowPrivilegeEscalation: false
+  # This is redundant with non-root + disallow privilege escalation,
+  # but we can provide it for defense in depth.
+  #requiredDropCapabilities:
+  #  - ALL
+  # Allow core volume types.
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    # Permits the container to run with root privileges as well.
+    rule: 'RunAsAny'
+  seLinux:
+    # This policy assumes the nodes are using AppArmor rather than SELinux.
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  readOnlyRootFilesystem: false
+---
+# Source: prometheus-operator/templates/prometheus-operator/psp.yaml
+
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: promethues-operator-promet-operator
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  # allowPrivilegeEscalation: false
+  # This is redundant with non-root + disallow privilege escalation,
+  # but we can provide it for defense in depth.
+  #requiredDropCapabilities:
+  #  - ALL
+  # Allow core volume types.
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    # Permits the container to run with root privileges as well.
+    rule: 'RunAsAny'
+  seLinux:
+    # This policy assumes the nodes are using AppArmor rather than SELinux.
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  readOnlyRootFilesystem: false
+---
+# Source: prometheus-operator/templates/prometheus/psp.yaml
+
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: promethues-operator-promet-prometheus
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  # allowPrivilegeEscalation: false
+  # This is redundant with non-root + disallow privilege escalation,
+  # but we can provide it for defense in depth.
+  #requiredDropCapabilities:
+  #  - ALL
+  # Allow core volume types.
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    # Permits the container to run with root privileges as well.
+    rule: 'RunAsAny'
+  seLinux:
+    # This policy assumes the nodes are using AppArmor rather than SELinux.
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  readOnlyRootFilesystem: false
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/job-patch/serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name:  promethues-operator-promet-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: prometheus-operator-admission    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+---
+# Source: prometheus-operator/templates/prometheus-operator/serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promethues-operator-promet-operator
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+imagePullSecrets:
+  []
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/job-patch/clusterrole.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name:  promethues-operator-promet-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: prometheus-operator-admission    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+rules:
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - validatingwebhookconfigurations
+      - mutatingwebhookconfigurations
+    verbs:
+      - get
+      - update
+  - apiGroups: ['extensions']
+    resources: ['podsecuritypolicies']
+    verbs:     ['use']
+    resourceNames:
+    - promethues-operator-promet-admission
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/clusterrole.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: promethues-operator-promet-operator
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - '*'
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - alertmanagers
+  - prometheuses
+  - prometheuses/finalizers
+  - alertmanagers/finalizers
+  - servicemonitors
+  - podmonitors
+  - prometheusrules
+  - podmonitors
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - list
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - services/finalizers
+  - endpoints
+  verbs:
+  - get
+  - create
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/psp-clusterrole.yaml
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: promethues-operator-promet-operator-psp
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+rules:
+- apiGroups: ['extensions']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - promethues-operator-promet-operator
+
+---
+# Source: prometheus-operator/templates/prometheus/clusterrole.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: promethues-operator-promet-prometheus
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes/metrics
+  verbs:
+  - get
+  - list
+  - watch
+# This permission are not in the prometheus-operator repo
+# they're grabbed from https://github.com/prometheus/prometheus/blob/master/documentation/examples/rbac-setup.yml
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  - "networking.k8s.io"
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+# Source: prometheus-operator/templates/prometheus/psp-clusterrole.yaml
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: promethues-operator-promet-prometheus-psp
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+rules:
+- apiGroups: ['extensions']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - promethues-operator-promet-prometheus
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/job-patch/clusterrolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name:  promethues-operator-promet-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: prometheus-operator-admission    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promethues-operator-promet-admission
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-promet-admission
+    namespace: monitoring
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/clusterrolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promethues-operator-promet-operator
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promethues-operator-promet-operator
+subjects:
+- kind: ServiceAccount
+  name: promethues-operator-promet-operator
+  namespace: monitoring
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/psp-clusterrolebinding.yaml
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: promethues-operator-promet-operator-psp
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promethues-operator-promet-operator-psp
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-promet-operator
+    namespace: monitoring
+
+---
+# Source: prometheus-operator/templates/prometheus/clusterrolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promethues-operator-promet-prometheus
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promethues-operator-promet-prometheus
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-promet-prometheus
+    namespace: monitoring
+
+
+---
+# Source: prometheus-operator/templates/prometheus/psp-clusterrolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promethues-operator-promet-prometheus-psp
+  labels:
+    app: prometheus-operator-prometheus
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promethues-operator-promet-prometheus-psp
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-promet-prometheus
+    namespace: monitoring
+
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/job-patch/role.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name:  promethues-operator-promet-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: prometheus-operator-admission    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - create
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/job-patch/rolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name:  promethues-operator-promet-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: prometheus-operator-admission    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: promethues-operator-promet-admission
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-promet-admission
+    namespace: monitoring
+
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-promet-operator
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+  - name: https
+    port: 443
+    targetPort: https
+  selector:
+    app: prometheus-operator-operator
+    release: "promethues-operator"
+  type: "ClusterIP"
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promethues-operator-promet-operator
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-operator-operator
+      release: "promethues-operator"
+  template:
+    metadata:
+      labels:
+        app: prometheus-operator-operator
+        
+        chart: prometheus-operator-6.6.1
+        release: "promethues-operator"
+        heritage: "Tiller"
+    spec:
+      containers:
+        - name: prometheus-operator
+          image: "quay.io/coreos/prometheus-operator:v0.31.1"
+          imagePullPolicy: "IfNotPresent"
+          args:
+            - --kubelet-service=kube-system/promethues-operator-promet-kubelet
+            - --logtostderr=true
+            - --crd-apigroup=monitoring.coreos.com
+            - --localhost=127.0.0.1
+            - --prometheus-config-reloader=quay.io/coreos/prometheus-config-reloader:v0.31.1
+            - --config-reloader-image=quay.io/coreos/configmap-reload:v0.0.1
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            {}
+            
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+        - name: tls-proxy
+          image: squareup/ghostunnel:v1.4.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - server
+            - --listen=:8443
+            - --target=127.0.0.1:8080
+            - --key=cert/key
+            - --cert=cert/cert
+            - --disable-authentication
+          volumeMounts:
+          - name: tls-proxy-secret
+            mountPath: /cert
+            readOnly: true
+          ports:
+            - containerPort: 8443
+              name: https
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+      volumes:
+        - name: tls-proxy-secret
+          secret:
+            defaultMode: 420
+            secretName: promethues-operator-promet-admission
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        
+      serviceAccountName: promethues-operator-promet-operator
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/job-patch/job-createSecret.yaml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name:  promethues-operator-promet-admission-create
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: prometheus-operator-admission-create    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  ttlSecondsAfterFinished: 0
+  template:
+    metadata:
+      name:  promethues-operator-promet-admission-create
+      labels:
+        app: prometheus-operator-admission-create        
+        chart: prometheus-operator-6.6.1
+        release: "promethues-operator"
+        heritage: "Tiller"
+    spec:
+      containers:
+        - name: create
+          image: jettech/kube-webhook-certgen:v1.0.0
+          imagePullPolicy: 
+          args:
+            - create
+            - --host=promethues-operator-promet-operator,promethues-operator-promet-operator.monitoring.svc
+            - --namespace=monitoring
+            - --secret-name=promethues-operator-promet-admission
+      restartPolicy: OnFailure
+      serviceAccountName: promethues-operator-promet-admission
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 2000
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/job-patch/job-patchWebhook.yaml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name:  promethues-operator-promet-admission-patch
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: prometheus-operator-admission-patch    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  ttlSecondsAfterFinished: 0
+  template:
+    metadata:
+      name:  promethues-operator-promet-admission-patch
+      labels:
+        app: prometheus-operator-admission-patch        
+        chart: prometheus-operator-6.6.1
+        release: "promethues-operator"
+        heritage: "Tiller"
+    spec:
+      containers:
+        - name: patch
+          image: jettech/kube-webhook-certgen:v1.0.0
+          imagePullPolicy: 
+          args:
+            - patch
+            - --webhook-name=promethues-operator-promet-admission
+            - --namespace=monitoring
+            - --secret-name=promethues-operator-promet-admission
+            - --patch-failure-policy=Fail
+      restartPolicy: OnFailure
+      serviceAccountName: promethues-operator-promet-admission
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 2000
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/mutatingWebhookConfiguration.yaml
+
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name:  promethues-operator-promet-admission
+  labels:
+    app: prometheus-operator-admission    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+webhooks:
+  - name: prometheusrulemutate.monitoring.coreos.com
+    failurePolicy: Ignore
+    rules:
+      - apiGroups:
+          - monitoring.coreos.com
+        apiVersions:
+          - "*"
+        resources:
+          - prometheusrules
+        operations:
+          - CREATE
+          - UPDATE
+    clientConfig:
+      service:
+        namespace: monitoring
+        name: promethues-operator-promet-operator
+        path: /admission-prometheusrules/mutate
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-operator
+  labels:
+    app: prometheus-operator-operator
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  endpoints:
+  - port: http
+    honorLabels: true
+  selector:
+    matchLabels:
+      app: prometheus-operator-operator
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "monitoring"
+
+---
+# Source: prometheus-operator/templates/prometheus-operator/admission-webhooks/validatingWebhookConfiguration.yaml
+
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name:  promethues-operator-promet-admission
+  labels:
+    app: prometheus-operator-admission    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+webhooks:
+  - name: prometheusrulemutate.monitoring.coreos.com
+    failurePolicy: Ignore
+    rules:
+      - apiGroups:
+          - monitoring.coreos.com
+        apiVersions:
+          - "*"
+        resources:
+          - prometheusrules
+        operations:
+          - CREATE
+          - UPDATE
+    clientConfig:
+      service:
+        namespace: monitoring
+        name: promethues-operator-promet-operator
+        path: /admission-prometheusrules/validate

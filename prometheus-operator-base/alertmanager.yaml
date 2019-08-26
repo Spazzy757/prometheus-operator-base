@@ -1,0 +1,189 @@
+---
+# Source: prometheus-operator/templates/alertmanager/psp.yaml
+
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: promethues-operator-promet-alertmanager
+  labels:
+    app: prometheus-operator-alertmanager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  # allowPrivilegeEscalation: false
+  # This is redundant with non-root + disallow privilege escalation,
+  # but we can provide it for defense in depth.
+  #requiredDropCapabilities:
+  #  - ALL
+  # Allow core volume types.
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    # Permits the container to run with root privileges as well.
+    rule: 'RunAsAny'
+  seLinux:
+    # This policy assumes the nodes are using AppArmor rather than SELinux.
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 0
+        max: 65535
+  readOnlyRootFilesystem: false
+---
+# Source: prometheus-operator/templates/alertmanager/serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promethues-operator-promet-alertmanager
+  labels:
+    app: prometheus-operator-alertmanager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+imagePullSecrets:
+  []
+  
+
+---
+# Source: prometheus-operator/templates/alertmanager/psp-clusterrole.yaml
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: promethues-operator-promet-alertmanager
+  labels:
+    app: prometheus-operator-alertmanager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+rules:
+- apiGroups: ['extensions']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - promethues-operator-promet-alertmanager
+
+---
+# Source: prometheus-operator/templates/alertmanager/psp-clusterrolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promethues-operator-promet-alertmanager
+  labels:
+    app: prometheus-operator-alertmanager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promethues-operator-promet-alertmanager
+subjects:
+  - kind: ServiceAccount
+    name: promethues-operator-promet-alertmanager
+    namespace: monitoring
+
+---
+# Source: prometheus-operator/templates/alertmanager/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: promethues-operator-promet-alertmanager
+  labels:
+    app: prometheus-operator-alertmanager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  ports:
+    - name: web
+      port: 9093
+      targetPort: 9093
+      protocol: TCP
+  selector:
+    app: alertmanager
+    alertmanager: promethues-operator-promet-alertmanager
+  type: "ClusterIP"
+
+---
+# Source: prometheus-operator/templates/alertmanager/alertmanager.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: Alertmanager
+metadata:
+  name: promethues-operator-promet-alertmanager
+  labels:
+    app: prometheus-operator-alertmanager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  baseImage: quay.io/prometheus/alertmanager
+  version: v0.17.0
+  replicas: 1
+  listenLocal: false
+  serviceAccountName: promethues-operator-promet-alertmanager
+  externalUrl: http://promethues-operator-promet-alertmanager.monitoring:9093
+  paused: false
+  logFormat: "logfmt"
+  logLevel:  "info"
+  retention: "120h"
+  routePrefix: "/"
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    
+
+---
+# Source: prometheus-operator/templates/alertmanager/servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: promethues-operator-promet-alertmanager
+  labels:
+    app: prometheus-operator-alertmanager
+    
+    chart: prometheus-operator-6.6.1
+    release: "promethues-operator"
+    heritage: "Tiller"
+spec:
+  selector:
+    matchLabels:
+      app: prometheus-operator-alertmanager
+      release: "promethues-operator"
+  namespaceSelector:
+    matchNames:
+      - "monitoring"
+  endpoints:
+  - port: web
+    path: "/metrics"
